@@ -9,6 +9,7 @@ use Exception;
 use Illuminate\Foundation\Application;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Log\LogManager;
+use Illuminate\Support\Facades\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Context as InstrumentationContext;
 use OpenTelemetry\API\Instrumentation\Configurator;
 use OpenTelemetry\Context\ScopeInterface;
@@ -83,6 +84,22 @@ class LogWatcherTest extends TestCase
         $record = $this->storage[0];
         $this->assertSame('hello', $record->getBody());
         $this->assertSame(['user_id' => 42, 'action' => 'login'], $record->getAttributes()->get('context'));
+    }
+
+    public function test_adds_laravel_context_to_message_context(): void
+    {
+        Context::add('request_id', 'abc-123');
+        Context::add('user_id', 'user-42');
+
+        $watcher = $this->createWatcher();
+        $this->emit($watcher, 'hello', ['action' => 'login']);
+
+        $record = $this->storage[0];
+        $context = $record->getAttributes()->get('context');
+
+        $this->assertSame('abc-123', $context['request_id']);
+        $this->assertSame('user-42', $context['user_id']);
+        $this->assertSame('login', $context['action']);
     }
 
     public function test_default_preserves_nested_arrays_in_context(): void
