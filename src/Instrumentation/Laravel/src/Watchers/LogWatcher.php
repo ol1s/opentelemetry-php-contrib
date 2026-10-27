@@ -8,6 +8,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Context;
 use OpenTelemetry\API\Instrumentation\AutoInstrumentation\Context as InstrumentationContext;
 use OpenTelemetry\API\Instrumentation\ConfigurationResolver;
 use OpenTelemetry\API\Logs\Severity;
@@ -72,7 +73,7 @@ class LogWatcher extends Watcher
             schemaUrl: Version::VERSION_1_24_0->url(),
         )->logRecordBuilder();
 
-        $context = array_filter($log->context, static fn ($value) => $value !== null);
+        $context = array_filter(array_merge(Context::all(), $log->context), static fn ($value) => $value !== null);
         $exception = $this->getExceptionFromContext($log->context);
 
         if ($exception !== null) {
