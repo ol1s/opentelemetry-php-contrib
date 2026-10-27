@@ -86,7 +86,7 @@ class LogWatcherTest extends TestCase
         $this->assertSame(['user_id' => 42, 'action' => 'login'], $record->getAttributes()->get('context'));
     }
 
-    public function test_adds_laravel_context_to_message_context(): void
+    public function test_merges_laravel_context_with_log_context(): void
     {
         Context::add('request_id', 'abc-123');
         Context::add('user_id', 'user-42');
@@ -95,11 +95,11 @@ class LogWatcherTest extends TestCase
         $this->emit($watcher, 'hello', ['action' => 'login']);
 
         $record = $this->storage[0];
-        $context = $record->getAttributes()->get('context');
+        $actual = $record->getAttributes()->get('context');
 
-        $this->assertSame('abc-123', $context['request_id']);
-        $this->assertSame('user-42', $context['user_id']);
-        $this->assertSame('login', $context['action']);
+        $this->assertSame('abc-123', $actual['request_id']);
+        $this->assertSame('user-42', $actual['user_id']);
+        $this->assertSame('login', $actual['action']);
     }
 
     public function test_default_preserves_nested_arrays_in_context(): void
